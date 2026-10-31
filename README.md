@@ -165,7 +165,3 @@ Idle (mode off) cost is minimal. In the mode, the reticle and nameplate scan run
 ## Reporting bugs
 
 Please include: your server and client version, other addons loaded, the output of `/acm debug` and `/acm probe`, and what you expected to happen.
-
-## License
-
-Add your license here.
