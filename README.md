@@ -1,9 +1,16 @@
+<p align="center"><img src="assets/banner.png" alt="Combat Evolved" width="100%"></p>
+
 # Combat Evolved
 
 **Action combat for World of Warcraft 3.3.5a (WotLK).**
 Press **middle mouse** to swap between normal tab-targeting and an action-combat mode: your cursor disappears, the camera follows your mouse like holding right-click, a reticle appears, and your mouse buttons fire your action bar.
 
 > Formerly "ActionCombat". Built for the 3.3.5a (build 12340) client. Tested on Warmane-style 3.3.5a clients; other 3.3.5a servers should work but are not verified.
+
+<p align="center">
+  <img src="assets/demo-action-mode.gif" alt="Action mode demo" width="49%">
+  <img src="assets/demo-reticle-styles.gif" alt="Reticle styles" width="49%">
+</p>
 
 ---
 
@@ -37,6 +44,9 @@ Combat Evolved turns WotLK into an action-combat game. Middle mouse toggles a mo
 - **Friendly-target key (default G)** targets friendly players (or friendly NPCs, optional); aiming at a player's nameplate targets that exact player.
 
 ### Interaction (default key F)
+
+<p align="center"><img src="assets/demo-interaction.gif" alt="Interaction demo" width="60%"></p>
+
 - **Classic**: F is the game's "Interact With Target".
 - **Smart**: aim at a friendly NPC (quest giver, vendor, guard); the first press targets it, the next press interacts. If it is already targeted, or you just killed it, F interacts immediately.
 - **Smart + double-press loot**: with nothing aimed, the first F frees the cursor at the reticle position and the second F is "Interact With Mouseover" - works on corpses, chests, herbs, ore and quest objects.
@@ -81,6 +91,8 @@ Seven events, each with its own sound picked from 17 built-in game sounds (or Of
 mode on, mode off, lock-on to an enemy, lock-on to a friendly, hit, critical hit, killing blow.
 
 ### Settings UI
+
+<p align="center"><img src="assets/demo-settings.gif" alt="Settings pages" width="60%"></p>
 - Six pages under **Interface > AddOns > Combat Evolved**: *Combat Evolved* (main), *Targeting & Plates*, *Position & Tests*, *Reticle Look*, *Combat Feedback*, *Immersion*.
 - Every setting has a description. Settings that override each other are grouped into cycle buttons.
 - **Defaults** button in the Interface Options window (or `/acm reset`) restores the built-in defaults.
