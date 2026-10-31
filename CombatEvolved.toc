@@ -1,0 +1,11 @@
+## Interface: 30300
+## Title: Combat Evolved
+## Notes: Action combat for WotLK 3.3.5a: mouselook aiming, click-to-cast on mouse buttons, smart interact, reticle, combat feedback and immersion options. Middle mouse toggles.
+## Author: You
+## Version: 3.3
+## SavedVariables: ACMDB
+
+CombatEvolved.lua
+ACM_Look.lua
+ACM_Feedback.lua
+ACM_Immersion.lua
