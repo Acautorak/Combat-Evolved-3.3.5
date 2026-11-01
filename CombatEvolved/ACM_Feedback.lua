@@ -69,7 +69,9 @@ local castArc = MakeArc(40, 31, 5)
 -- range ------------------------------------------------------------------
 local outOfRange = false
 local function ActionId(slot)
-    local b = _G["ActionButton" .. slot]
+    local b
+    if BonusActionBarFrame and BonusActionBarFrame:IsShown() then b = _G["BonusActionButton" .. slot] end
+    b = b or _G["ActionButton" .. slot]
     if b and ActionButton_GetPagedID then
         local ok, id = pcall(ActionButton_GetPagedID, b)
         if ok and id then return id end

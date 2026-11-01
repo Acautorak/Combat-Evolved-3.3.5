@@ -1,4 +1,4 @@
--- Combat Evolved v3.3 for WotLK 3.3.5a (formerly ActionCombat)
+-- Combat Evolved v3.4 for WotLK 3.3.5a (formerly ActionCombat)
 -- MIDDLE MOUSE toggles action combat mode:
 --   * cursor hidden, camera in mouselook (character turns with the camera)
 --   * Left click  -> action button <left>  (default 1), optional auto-attack
@@ -55,6 +55,8 @@ local ACM_DEFAULTS = {
     nameColor = "game",     -- names-only color: game (untouched) / reaction (bar color) / white
     nameScale = 1,          -- names-only text size multiplier
     ownNames = false,       -- show the game's own names above units (untouched), plates fully hidden
+    barSource = "blizzard",  -- which action buttons the click buttons press (blizzard handles stance/form bars)
+    freeKey = "alt",         -- hold to free the cursor at the reticle: alt / ctrl / shift / none
     autoTarget = true,      -- clicking targets the enemy under the reticle first (off = only fires your button)
     gPlayersOnly = true,    -- G targets players only
     enemyAlpha = 0,         -- enemy nameplate opacity in action mode (0 = hidden)
@@ -189,6 +191,15 @@ toggle:SetAttribute("_onstate-acmalt", [[
     end
 ]])
 RegisterStateDriver(toggle, "acmalt", "[mod:alt] 1; 0")
+
+local function FreeKeyDown()
+    local k = ACMDB and ACMDB.freeKey or "alt"
+    if k == "alt" then return IsAltKeyDown() end
+    if k == "ctrl" then return IsControlKeyDown() end
+    if k == "shift" then return IsShiftKeyDown() end
+    return false
+end
+ACM.FreeKeyDown = FreeKeyDown
 
 local function Active()
     return toggle:GetAttribute("acm") == 1
@@ -802,7 +813,7 @@ local hoverPauseUntil = 0
 
 local function Blocker()
     if GetCursorInfo() then return "item on cursor" end
-    if IsAltKeyDown() then return "ALT held" end
+    if FreeKeyDown() then return "free key held" end
     if GetTime() < hoverPauseUntil then return "loot hover" end
     if not UIParent:IsShown() then return "UI hidden" end
     if ChatFrame1EditBox and ChatFrame1EditBox:HasFocus() then return "typing in chat" end
@@ -988,7 +999,7 @@ end
 
 local function UpdateLeftBinding()
     if InCombatLockdown() then return end
-    if IsAltKeyDown() or GetTime() < hoverPauseUntil then return end
+    if FreeKeyDown() or GetTime() < hoverPauseUntil then return end
     local want = WantedLeft()
     if CurLeft() ~= want then SetLeftBind(want) end
 end
@@ -1078,7 +1089,7 @@ driver:SetScript("OnUpdate", function(_, e)
         local why = Blocker()
         if why ~= lastWhy then
             lastWhy = why
-            if why and why ~= "ALT held" and why ~= "loot hover" then
+            if why and why ~= "free key held" and why ~= "loot hover" then
                 Say("cursor freed by: " .. why .. "   (settings: /acm)")
             end
         end
@@ -1150,7 +1161,16 @@ local function MacroFor(slot, atk)
     if atk then
         m = m .. "/startattack [harm,nodead]\n"
     end
-    return m .. "/click ActionButton" .. slot
+    local src = ACMDB.barSource or "blizzard"
+    if src == "bt4" then
+        return m .. "/click BT4Button" .. slot
+    elseif src == "dominos" then
+        return m .. "/click DominosActionButton" .. slot
+    elseif src == "elvui" then
+        return m .. "/click ElvUI_Bar1Button" .. slot
+    end
+    -- default UI: while shapeshifted / in a stance the bonus bar sits on top of bar one
+    return m .. "/click [bonusbar] BonusActionButton" .. slot .. "; ActionButton" .. slot
 end
 
 local function ApplyConfig()
@@ -1180,6 +1200,13 @@ local function ApplyConfig()
     ClearOverrideBindings(toggle)
     SetOverrideBindingClick(toggle, true, "BUTTON3", "ACM_Toggle")
     toggle:SetAttribute("acm", 0)
+    toggle:SetAttribute("alt", 0)
+    local fk = ACMDB.freeKey or "alt"
+    if fk == "alt" or fk == "ctrl" or fk == "shift" then
+        RegisterStateDriver(toggle, "acmalt", "[mod:" .. fk .. "] 1; 0")
+    else
+        UnregisterStateDriver(toggle, "acmalt")
+    end
 end
 
 ACM.ApplyConfig = ApplyConfig
@@ -1598,7 +1625,7 @@ end
 -------------------------------------------------------------------------------
 local function BuildMain()
     local L = ACM.NewPage("main", "Combat Evolved", "Combat Evolved", panel,
-        "Middle mouse toggles the mode.  Hold ALT = cursor at the reticle + normal clicks.  Changes to keys and buttons apply out of combat.")
+        "Middle mouse toggles the mode.  Hold the free-cursor key (ALT by default) = cursor at the reticle + normal clicks.  Changes to keys and buttons apply out of combat.")
     ACM.pages = ACM.pages or {}
     ACM.pages.main = L
 
@@ -1642,10 +1669,34 @@ local function BuildMain()
         1, 12, 1, function() return ACMDB.right end,
         function(v) ACMDB.right = v; ApplyConfig() end, "%d")
 
+    L.Cycle("barsource",
+        function()
+            local n = { blizzard = "default Blizzard bars (stance/form aware)", bt4 = "Bartender4 (BT4Button)",
+                        dominos = "Dominos", elvui = "ElvUI bar 1" }
+            return "Click buttons press: " .. n[ACMDB.barSource or "blizzard"]
+        end,
+        "Which action buttons left and right click press. The default follows shapeshift forms and stances (cat, bear, battle stance, stealth...) so clicks no longer drop your form. If you use a bar addon, pick it here so clicks use its buttons.",
+        function()
+            local o = { blizzard = "bt4", bt4 = "dominos", dominos = "elvui", elvui = "blizzard" }
+            ACMDB.barSource = o[ACMDB.barSource or "blizzard"]
+            ApplyConfig()
+        end, 440)
+
     L.Header("Keys")
     L.Check("interact", "Interact key enabled", "While in the mode, this key interacts (talk, loot, use). See the Targeting & Plates page for the smart modes.",
         function() return ACMDB.interact end,
         function(v) ACMDB.interact = v; ApplyConfig() end)
+    L.Cycle("freekey",
+        function()
+            local n = { alt = "ALT", ctrl = "CTRL", shift = "SHIFT", none = "disabled" }
+            return "Hold to free the cursor: " .. n[ACMDB.freeKey or "alt"]
+        end,
+        "While you hold this key the cursor appears at the reticle and normal clicks work. Pick another key, or disabled, if you bind things like ALT+1 on your bars. With it disabled, use the interact double-press or the world click to reach the cursor.",
+        function()
+            local o = { alt = "ctrl", ctrl = "shift", shift = "none", none = "alt" }
+            ACMDB.freeKey = o[ACMDB.freeKey or "alt"]
+            ApplyConfig()
+        end, 360)
     L.Key("ikey", "Interact key", "interactKey", "Click, then press the key you want. Delete clears it.")
     L.Key("fkey", "Target friendly player key", "friendKey", "Targets the next friendly player (or friendly unit, see the Targeting & Plates page).")
 
